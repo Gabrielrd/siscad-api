@@ -1,6 +1,16 @@
-FROM maven:3.8.6-jdk-8-slim AS MAVEN_TOOL_CHAIN
-COPY pom.xml /tmp/
-COPY src /tmp/src/WORKDIR /tmp/
-RUN mvn package FROM openjdk:8-jdk-alpine
-COPY --from=MAVEN_TOOL_CHAIN  /tmp/target/*.jar app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+FROM ubuntu:latest AS build
+
+RUN apt-get update
+RUN apt-get install openjdk-17-jdk -y
+COPY . .
+
+RUN apt-get install maven -y
+RUN mvn clean install 
+
+FROM openjdk:17-jdk-slim
+
+EXPOSE 8080
+
+COPY --from=build /target/siscad-api-1.jar app.jar
+
+ENTRYPOINT [ "java", "-jar", "app.jar" ]
